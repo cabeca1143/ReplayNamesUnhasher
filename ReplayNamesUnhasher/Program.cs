@@ -9,10 +9,11 @@ namespace Program
     static class Program
     {
         static Dictionary<long, string> NameHashes = new Dictionary<long, string>();
+        static JArray Replay = new JArray();
 
         static void Main(string[] inputPath)
         {
-            string path;
+            string path = "";
             if (inputPath.Length > 0)
             {
                 path = inputPath[0];
@@ -24,11 +25,10 @@ namespace Program
                 return;
             }
 
-            JArray replay = new JArray();
             try
             {
                 Console.WriteLine("Loading replay file...\nThis might take a while.");
-                replay = JArray.Parse(File.ReadAllText(path));
+                Replay = JArray.Parse(File.ReadAllText(path));
             }
             catch (Exception ex)
             {
@@ -50,34 +50,31 @@ namespace Program
             Console.WriteLine("Hash Map Loaded!");
 
             Console.WriteLine("Unhashing...\nThis might take a while");
-            Parallel.For(0, replay.Count, i =>
+            for (int i = 0; i < Replay.Count; i++)
             {
-                var packetInfo = replay[i].SelectToken("Packet");
+                var packetInfo = Replay[i].SelectToken("Packet");
 
-                Parallel.ForEach(packetInfo.ToArray(), parameter =>
+                foreach (JProperty parameter in packetInfo)
                 {
-                    try
+                    if (parameter.Values().Children().Count() > 0)
                     {
-                        var key = parameter.First.Value<long>();
-
-                        if (NameHashes.ContainsKey(key))
+                        foreach (var child in parameter.Values().Children())
                         {
-                            string name = parameter.ToString();
-                            Regex rgx = new Regex("[\\d - : \" ]");
-                            name = rgx.Replace(name, "");
-                            replay[i]["Packet"][name] = NameHashes[key];
-                            Console.WriteLine($"Unhashed {key} to {NameHashes[key]}!");
+                            if (child is JProperty jp)
+                            {
+                                Unhash(jp, i, true, parameter.Name);
+                            }
                         }
                     }
-                    catch
+                    else
                     {
-
+                        Unhash(parameter, i);
                     }
-                });
-            });
+                };
+            };
 
             string outputPath = $"{Path.GetFullPath(Path.GetDirectoryName(path))}/{Path.GetFileNameWithoutExtension(path)}Unhashed.json";
-            File.WriteAllText(outputPath, replay.ToString());
+            File.WriteAllText(outputPath, Replay.ToString());
             Console.WriteLine($"Done!\nYour file is in: {outputPath}\nPress Enter to close this window...");
             Console.Read();
         }
@@ -94,7 +91,7 @@ namespace Program
                 contentPath = manualPath;
             }
 
-            if(contentPath != null && Directory.Exists(contentPath))
+            if (contentPath != null && Directory.Exists(contentPath))
             {
                 foreach (var file in Directory.GetFiles(contentPath, "*.json", SearchOption.AllDirectories))
                 {
@@ -115,7 +112,7 @@ namespace Program
             string result = null;
 
             var executionDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            if(executionDirectory != null)
+            if (executionDirectory != null)
             {
                 var directories = Directory.GetDirectories(executionDirectory);
                 if (directories != null && directories.Contains($"{executionDirectory}\\Content"))
@@ -145,6 +142,34 @@ namespace Program
             }
 
             return result;
+        }
+
+        static void Unhash(JProperty token, int index, bool isArrayParameter = false, string parentName = "")
+        {
+            long key;
+            try
+            {
+                key = token.First.Value<long>();
+            }
+            catch
+            {
+                return;
+            }
+
+            if (NameHashes.ContainsKey(key))
+            {
+                if (!isArrayParameter)
+                {
+                    Replay[index]["Packet"][token.Name] = NameHashes[key];
+                    Console.WriteLine($"Unhashed {key} to {NameHashes[key]}!");
+                }
+                else
+                {
+                    Replay[index]["Packet"][parentName][0][token.Name] = NameHashes[key];
+                    Console.WriteLine($"Unhashed {key} to {NameHashes[key]}!");
+                }
+            }
+
         }
     }
 }

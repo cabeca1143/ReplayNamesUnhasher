@@ -2,3 +2,15 @@
 .vs/ReplayNamesUnhasher/v17/.suo
 .vs/ReplayNamesUnhasher/DesignTimeBuild/.dtbcache.v2
 .vs/ReplayNamesUnhasher/v17/.futdcache.v1
+ReplayNamesUnhasher/obj/Debug/net6.0/.NETCoreApp,Version=v6.0.AssemblyAttributes.cs
+ReplayNamesUnhasher/obj/Debug/net6.0/ReplayNamesUnhasher.AssemblyInfo.cs
+ReplayNamesUnhasher/obj/Debug/net6.0/ReplayNamesUnhasher.AssemblyInfoInputs.cache
+ReplayNamesUnhasher/obj/Debug/net6.0/ReplayNamesUnhasher.assets.cache
+ReplayNamesUnhasher/obj/Debug/net6.0/ReplayNamesUnhasher.csproj.AssemblyReference.cache
+ReplayNamesUnhasher/obj/Debug/net6.0/ReplayNamesUnhasher.GeneratedMSBuildEditorConfig.editorconfig
+ReplayNamesUnhasher/obj/Debug/net6.0/ReplayNamesUnhasher.GlobalUsings.g.cs
+ReplayNamesUnhasher/obj/project.assets.json
+ReplayNamesUnhasher/obj/project.nuget.cache
+ReplayNamesUnhasher/obj/ReplayNamesUnhasher.csproj.nuget.dgspec.json
+ReplayNamesUnhasher/obj/ReplayNamesUnhasher.csproj.nuget.g.props
+ReplayNamesUnhasher/obj/ReplayNamesUnhasher.csproj.nuget.g.targets
