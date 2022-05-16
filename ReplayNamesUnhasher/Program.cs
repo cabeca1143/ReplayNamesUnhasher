@@ -9,11 +9,12 @@ namespace Program
     static class Program
     {
         static Dictionary<long, string> NameHashes = new Dictionary<long, string>();
-        static JArray Replay = new JArray();
+        static JArray Replay;
+        static int i, j, k;
 
         static void Main(string[] inputPath)
         {
-            string path = "";
+            string path = @"";
             if (inputPath.Length > 0)
             {
                 path = inputPath[0];
@@ -24,7 +25,7 @@ namespace Program
                 Console.Read();
                 return;
             }
-
+            
             try
             {
                 Console.WriteLine("Loading replay file...\nThis might take a while.");
@@ -48,35 +49,68 @@ namespace Program
             }
 
             Console.WriteLine("Hash Map Loaded!");
-
             Console.WriteLine("Unhashing...\nThis might take a while");
-            for (int i = 0; i < Replay.Count; i++)
-            {
-                var packetInfo = Replay[i].SelectToken("Packet");
 
-                foreach (JProperty parameter in packetInfo)
-                {
-                    if (parameter.Values().Children().Count() > 0)
-                    {
-                        foreach (var child in parameter.Values().Children())
-                        {
-                            if (child is JProperty jp)
-                            {
-                                Unhash(jp, i, true, parameter.Name);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Unhash(parameter, i);
-                    }
-                };
-            };
+            ProcessInfo();
 
             string outputPath = $"{Path.GetFullPath(Path.GetDirectoryName(path))}/{Path.GetFileNameWithoutExtension(path)}Unhashed.json";
             File.WriteAllText(outputPath, Replay.ToString());
+            Replay.Clear();
+            GC.Collect();
             Console.WriteLine($"Done!\nYour file is in: {outputPath}\nPress Enter to close this window...");
             Console.Read();
+        }
+
+        static void ProcessInfo()
+        {
+            for (i = 0; i < Replay.Count; i++)
+            {
+                var packetInfo = Replay[i].SelectToken("Packet").ToArray();
+
+                for(k = 0; k < packetInfo.Count(); k++)
+                {
+                    ProcessProperty(packetInfo[k] as JProperty);
+                }
+            };
+        }
+        static void ProcessProperty(JProperty parent)
+        {
+            if (parent.Values().Children().Count() > 1)
+            {
+                foreach (var child in parent.Children().Children())
+                {
+                    if(child is JProperty pr)
+                    {
+                        Unhash(pr, true, parent.Name);
+                    }
+                    else if(child is JObject obj)
+                    {
+                        ProcessJObject(obj, parent);
+                    }
+
+                    j++;
+                }
+                j = 0;
+            }
+            else
+            {
+                Unhash(parent as JProperty);
+            }
+        }
+
+        static void ProcessJObject(JObject obj, JProperty parent)
+        {
+            foreach(var child in obj.Children())
+            {
+                if(child is JObject)
+                {
+                    ProcessJObject(obj, parent);
+                }
+                else if(child is JProperty jpro)
+                {
+                    Unhash(jpro, true, parent.Name);
+                }
+            }
         }
 
         public static void LoadHashes(string manualPath = "")
@@ -144,7 +178,7 @@ namespace Program
             return result;
         }
 
-        static void Unhash(JProperty token, int index, bool isArrayParameter = false, string parentName = "")
+        static void Unhash(JProperty token, bool isArrayParameter = false, string parentName = "")
         {
             long key;
             try
@@ -160,16 +194,22 @@ namespace Program
             {
                 if (!isArrayParameter)
                 {
-                    Replay[index]["Packet"][token.Name] = NameHashes[key];
+                    Replay[i]["Packet"][token.Name] = NameHashes[key];
                     Console.WriteLine($"Unhashed {key} to {NameHashes[key]}!");
                 }
                 else
                 {
-                    Replay[index]["Packet"][parentName][0][token.Name] = NameHashes[key];
-                    Console.WriteLine($"Unhashed {key} to {NameHashes[key]}!");
+                    try
+                    {
+                        Replay[i]["Packet"][parentName].ToArray()[j][token.Name] = NameHashes[key];
+                        Console.WriteLine($"Unhashed {key} to {NameHashes[key]}!");
+                    }
+                    catch
+                    {
+                        return;
+                    }
                 }
             }
-
         }
     }
 }
